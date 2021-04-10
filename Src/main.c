@@ -24,6 +24,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <stdint.h>
+#include "application_oled.h"
+#include "stm32_core.h"
+#include "stm32_eeprom.h"
+#include "stm32_iic.h"
+#include "stm32_io.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -107,7 +113,7 @@ int main(void)
   MX_TIM17_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
-
+  APP_startup();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -115,7 +121,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	APP_loop();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
