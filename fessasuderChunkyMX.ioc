@@ -1,7 +1,8 @@
 #MicroXplorer Configuration settings - do not modify
 File.Version=6
 I2C1.I2C_Speed_Mode=I2C_Fast
-I2C1.IPParameters=Timing,I2C_Speed_Mode
+I2C1.IPParameters=Timing,I2C_Speed_Mode,Speed
+I2C1.Speed=400
 I2C1.Timing=0x2010091A
 KeepUserPlacement=false
 Mcu.Family=STM32F0
@@ -160,9 +161,10 @@ RCC.USBOutputFreqValue=48000000
 RCC.VCOOutput2Freq_Value=8000000
 SH.S_TIM14_CH1.0=TIM14_CH1,PWM Generation1 CH1
 SH.S_TIM14_CH1.ConfNb=1
+TIM14.AutoReloadPreload=TIM_AUTORELOAD_PRELOAD_ENABLE
 TIM14.Channel=TIM_CHANNEL_1
-TIM14.IPParameters=Channel,Period
-TIM14.Period=959
+TIM14.IPParameters=Channel,Period,AutoReloadPreload
+TIM14.Period=999
 TIM17.IPParameters=Prescaler,Period
 TIM17.Period=0xFFFF
 TIM17.Prescaler=48000-1

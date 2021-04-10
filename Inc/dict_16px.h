@@ -28,7 +28,7 @@ uint8_t DICT16_print(char* str, uint8_t x, uint8_t y, uint8_t mode){
     while(*str!=0 && x<SSD1306_WIDTH){
         char c=*str;
         if(c>=48 && c<63){
-            CORE_flashMemcpy(rambuf, DICT16PX_font[c-48], 12*2);
+            memcpy(rambuf, DICT16PX_font[c-48], 12*2);
             OLED_copySprite16(rambuf,12,x,y,mode);
             x+=14;
         }else if(c==' '){

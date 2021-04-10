@@ -55,10 +55,11 @@ void IO_startup();
 uint8_t IO_getButtons();
 uint16_t IO_getRawTemp();
 uint16_t IO_getRawVoltage();
-void IO_activateMosfet(uint8_t sense);
+void IO_pwmMosfet(uint16_t permil);
 
 void IIC_startup();
-void IIC_send(uint8_t addr, uint8_t *bytes, uint16_t size);
+uint8_t IIC_send(uint8_t addr, uint8_t *bytes, uint16_t size);
+uint8_t IIC_recv(uint8_t addr, uint8_t *bytes, uint16_t size);
 
 void EEPROM_startup();
 void EEPROM_save(uint8_t cfg);

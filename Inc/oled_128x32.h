@@ -2,6 +2,7 @@
 #ifndef _FERRASSUDER__OLED_128_32_H_
 #define _FERRASSUDER__OLED_128_32_H_
 
+#include <stdlib.h>
 #include "general_interface.h"
 
 void OLED_startup();
@@ -138,7 +139,7 @@ void OLED_clearScreen(uint8_t color){
 void OLED_display(){
     SSD1306_transmitList(0,SSD1306_dlist1, sizeof(SSD1306_dlist1));
     SSD1306_transmitList(0x40, (uint8_t*)SSD1306_buffer, sizeof(SSD1306_buffer));
-    if(!APP_cfgs[CFG_USED_HAND]){
+    if(APP_cfgs[CFG_USED_HAND]){
       SSD1306_command1(SSD1306_COMSCANINC);
       SSD1306_command1(SSD1306_SEGREMAP | 0x0);
     }else{

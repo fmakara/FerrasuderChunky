@@ -1,7 +1,8 @@
 //Application functions
 #ifndef _FERRASSUDER__APPLICATION_H_
 #define _FERRASSUDER__APPLICATION_H_
-
+#include <stdlib.h>
+#include <string.h>
 #include "general_interface.h"
 #include "control.h"
 
@@ -24,9 +25,7 @@ void APP_startup(){
     CONTROL_startup();
     IO_pwmMosfet(0);
     
-    //CORE_delay(1000);
     IIC_startup();
-    //CORE_delay(1000);
     OLED_startup();
     
     memset(APP_bargraph, 0, sizeof(APP_bargraph));
@@ -47,22 +46,23 @@ void APP_startup(){
     APP_cfgs[CFG_VALUE_350] = 263;
     APP_cfgs[CFG_VALUE_400] = 303;
     EEPROM_startup();
-    
+
     CONTROL_targetTemp = APP_cfgs[CFG_INITIAL_TEMP];
 }
 void APP_loop(){
     //Prepare to read the bimetalic
-    IO_pwmMosfet(0);
-    CORE_delay(1);
-    //Calculate command
-    int16_t raw = CONTROL_readFilterRawTemperature();
-    CONTROL_currentTemp = CONTROL_rawToC(raw);
-    int32_t command = CONTROL_calculateComand();
-    CONTROL_currentCommand_percent = CONTROL_commandToPercent(command);
-    //Activate PWM
-    IO_pwmMosfet(CONTROL_currentCommand_percent);
+//    IO_pwmMosfet(0);
+//    CORE_delay(1);
+//    //Calculate command
+//    int16_t raw = CONTROL_readFilterRawTemperature();
+//    CONTROL_currentTemp = CONTROL_rawToC(raw);
+//    int32_t command = CONTROL_calculateComand();
+//    CONTROL_currentCommand_percent = CONTROL_commandToPercent(command);
+//    //Activate PWM
+//    IO_pwmMosfet(CONTROL_currentCommand_percent);
     //Run PWM while updating screen
     APP_manageUI();
+    IO_pwmMosfet(500);
 }
 
 void APP_degcToUser(int16_t temp, char* str){
@@ -229,6 +229,8 @@ void APP_mainMenu(){
                       EEPROM_save(CFG_USED_HAND);
                   }
                   IO_getButtons();
+                  IO_getButtons();
+                  OLED_display();
                   break;
                case 4://"Cor LED estavel"
                   APP_cfgs[CFG_LED_STABLE] = APP_readColor(APP_cfgs[CFG_LED_STABLE]);

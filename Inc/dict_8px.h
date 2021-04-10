@@ -109,7 +109,7 @@ uint8_t DICT8_print(const char* str, int8_t x, int8_t y, uint8_t mode){
     while(*str!=0 && x<SSD1306_WIDTH){
         char c=*str;
         if(c>=32 && c<128){
-            CORE_flashMemcpy(rambuf, DICT8PX_font[c-32], 6);
+            memcpy(rambuf, DICT8PX_font[c-32], 6);
             OLED_copySprite8(rambuf,6,x,y,mode);
             x+=7;
         }

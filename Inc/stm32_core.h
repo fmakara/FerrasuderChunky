@@ -22,8 +22,5 @@ uint32_t CORE_getRand(){
 void CORE_delay(uint16_t ms){
 	HAL_Delay(ms);
 }
-void CORE_flashMemcpy(void* dest, const void* src, uint8_t size){
-    memcpy(dest, src, size);
-}
 
 #endif // _FERRASSUDER__ARDUINO_IO_H_
