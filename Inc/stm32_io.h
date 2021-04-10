@@ -65,10 +65,5 @@ uint16_t IO_getRawVoltage(){
 void IO_pwmMosfet(uint16_t permil){
 	if(permil>1000)permil = 1000;
 	TIM14->CCR1 = permil;
-	/*
-    uint16_t aw = percent<<8;
-    aw /=100;
-    if(aw>255)aw = 255;
-    analogWrite(PIN_MOSFET, aw );*/
 }
 #endif // _FERRASSUDER__ARDUINO_IO_H_

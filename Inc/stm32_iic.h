@@ -4,13 +4,6 @@
 
 #include "general_interface.h"
 #include "stm32f0xx_hal_i2c.h"
-#if defined(BUFFER_LENGTH)
- #define IIC_WRITE_BUFFER_MAX BUFFER_LENGTH          ///< AVR or similar Wire lib
-#elif defined(SERIAL_BUFFER_SIZE)
- #define IIC_WRITE_BUFFER_MAX (SERIAL_BUFFER_SIZE-1) ///< Newer Wire uses RingBuffer
-#else
- #define IIC_WRITE_BUFFER_MAX 32                     ///< Use common Arduino core default
-#endif
 
 extern I2C_HandleTypeDef hi2c1;
 

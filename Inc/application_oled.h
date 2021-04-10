@@ -13,7 +13,7 @@
 void APP_manageUI();
 void APP_mainMenu();
 int32_t APP_readColor(int32_t current);
-int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t temp);
+int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t type);
 
 uint32_t APP_bargraph[40];
 int32_t APP_cfgs[CFG_MAX];
@@ -45,7 +45,11 @@ void APP_startup(){
     APP_cfgs[CFG_VALUE_300] = 223;
     APP_cfgs[CFG_VALUE_350] = 263;
     APP_cfgs[CFG_VALUE_400] = 303;
+    APP_cfgs[CFG_MOV_SENSE] = 5;
     EEPROM_startup();
+
+    ACC_startup();
+    ACC_setMovementTh(APP_cfgs[CFG_MOV_SENSE]);
 
     CONTROL_targetTemp = APP_cfgs[CFG_INITIAL_TEMP];
 }
@@ -61,8 +65,8 @@ void APP_loop(){
 //    //Activate PWM
 //    IO_pwmMosfet(CONTROL_currentCommand_percent);
     //Run PWM while updating screen
-    APP_manageUI();
-    IO_pwmMosfet(500);
+
+	APP_manageUI();
 }
 
 void APP_degcToUser(int16_t temp, char* str){
@@ -80,7 +84,7 @@ void APP_manageUI(){
     static uint32_t lastMovement = 0;
     uint8_t btn = IO_getButtons();
     uint8_t userSleep = 0;
-    if(btn){
+    if(ACC_isMoving() || btn){
         lastMovement = CORE_getMillis();
     }
     if(btn & BTN_UP){
@@ -119,7 +123,7 @@ void APP_manageUI(){
         int8_t *velocitiesX = (int8_t*)(positionsY+10);
         for(uint8_t i=0; i<10; i++){
             positionsX[i] = CORE_getRand()&(128*4-1);
-            positionsY[i] = CORE_getRand()&(32*2-1);
+            positionsY[i] = (CORE_getRand()%(4*(32+8)))-4*8;
             velocitiesX[i] = (CORE_getRand()&(4-1))-2;
         }
         do{ 
@@ -137,8 +141,9 @@ void APP_manageUI(){
             OLED_display();
             btn = IO_getButtons();
             //Always wakeup with buttons, wakeup from shake only when user didnt press
-        }while(!( (btn&(BTN_UP|BTN_DOWN|BTN_CENTER))||( (btn&BTN_CENTER)&&!userSleep )  ) );
+        }while(!( (btn&(BTN_UP|BTN_DOWN|BTN_CENTER))||( ACC_isMoving()&&!userSleep ) ) );
         memset(APP_bargraph, 0, sizeof(APP_bargraph));
+        lastMovement = CORE_getMillis();
     }
     
     if(CONTROL_targetTemp>400)CONTROL_targetTemp=400;
@@ -172,12 +177,13 @@ void APP_manageUI(){
     OLED_display();
 }
 
-const char APP_MENU_STRINGS[12][19] = {
+const char APP_MENU_STRINGS[13][19] = {
   "",
   "Voltar",
   "Tempo p/ dormir",
   "Temp. inicial",
   "M~o usada",
+  "Sensibilidade",
   "Cor LED est`vel",
   "Cor LED inst`vel",
   "Unidade Temp.",
@@ -200,18 +206,18 @@ void APP_mainMenu(){
            CORE_delay(50);
            btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
         }while(btn==0);
-        if( (btn&BTN_DOWN) && (menuIdx<10) ){
+        if( (btn&BTN_DOWN) && (menuIdx<11) ){
             menuIdx++;
         }else if( (btn&BTN_UP) && (menuIdx>0) ){
             menuIdx--; 
         }else if(btn&BTN_CENTER){
             switch(menuIdx){
                case 1://"Tempo p/ dormir"
-                  APP_cfgs[CFG_SLEEP_TIME_S] = APP_readInteger(APP_cfgs[CFG_SLEEP_TIME_S], 0, 900, 5, 0);
+                  APP_cfgs[CFG_SLEEP_TIME_S] = APP_readInteger(APP_cfgs[CFG_SLEEP_TIME_S], 0, 900, 5, 1);
                   EEPROM_save(CFG_SLEEP_TIME_S);
                   break;
                case 2://"Temp. inicial"
-                  APP_cfgs[CFG_INITIAL_TEMP] = APP_readInteger(APP_cfgs[CFG_INITIAL_TEMP], 100, 400, 5, 1);
+                  APP_cfgs[CFG_INITIAL_TEMP] = APP_readInteger(APP_cfgs[CFG_INITIAL_TEMP], 100, 400, 5, 2);
                   EEPROM_save(CFG_INITIAL_TEMP);
                   break;
                case 3://"Mao usada"
@@ -232,15 +238,21 @@ void APP_mainMenu(){
                   IO_getButtons();
                   OLED_display();
                   break;
-               case 4://"Cor LED estavel"
+
+               case 4://"Sensibilidade"
+                  APP_cfgs[CFG_MOV_SENSE] = APP_readInteger(APP_cfgs[CFG_MOV_SENSE], 0, 10, 1, 0);
+                  EEPROM_save(CFG_MOV_SENSE);
+                  ACC_setMovementTh(APP_cfgs[CFG_MOV_SENSE]);
+                  break;
+               case 5://"Cor LED estavel"
                   APP_cfgs[CFG_LED_STABLE] = APP_readColor(APP_cfgs[CFG_LED_STABLE]);
                   EEPROM_save(CFG_LED_STABLE);
                   break;
-               case 5://"Cor LED instavel"
+               case 6://"Cor LED instavel"
                   APP_cfgs[CFG_LED_UNSTABLE] = APP_readColor(APP_cfgs[CFG_LED_UNSTABLE]);
                   EEPROM_save(CFG_LED_UNSTABLE);
                   break;
-               case 6://"Unidade Temp."
+               case 7://"Unidade Temp."
                   OLED_clearScreen(0);
                   DICT8_print(" Fahrenheit       ",2,2,WHITE);
                   DICT8_print("          Celcius ",2,12,WHITE);
@@ -259,11 +271,11 @@ void APP_mainMenu(){
                   }
                   EEPROM_save(CFG_TEMP_STD);
                   break;
-               case 7://"Calib. Temperatura"
+               case 8://"Calib. Temperatura"
                   break;
-               case 8://"Calib. Controle"
+               case 9://"Calib. Controle"
                   break;
-               case 9:// "Sobre"
+               case 10:// "Sobre"
                   OLED_clearScreen(0);
                   DICT8_print("Microesta{~o TS-12",2,2,WHITE);
                   DICT8_print("C.N. 'Ferrassuder'",2,12,WHITE);
@@ -290,18 +302,18 @@ void APP_mainMenu(){
     }
 }
 
-int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t temp){
+int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t type){
     uint8_t wait=0, btn;
     while(1){
         OLED_clearScreen(0);
-        if(current==0){
+        if((current==0) && (type!=0)){
             DICT8_print("OFF",25,12,WHITE);
         }else{
             char str[5];
-            if(temp)APP_degcToUser(current, str);
-            else    sprintf(str,"%4d",(int)current);
+            if(type==2)APP_degcToUser(current, str);
+            else sprintf(str,"%4d",(int)current);
             DICT16_print(str,16,8,WHITE);
-            if(!temp)DICT8_print("S",75,16,WHITE);
+            if(type==1)DICT8_print("S",75,16,WHITE);
         }
         OLED_display();
         

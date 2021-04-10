@@ -39,7 +39,8 @@ Src/main.o: ../Src/main.c \
  C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_eeprom.h \
  C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_iic.h \
  C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_io.h \
- C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/main.h
+ C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/main.h \
+ C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_acc.h
 
 C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/main.h:
 
@@ -122,3 +123,5 @@ C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_iic.h:
 C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_io.h:
 
 C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/main.h:
+
+C:/Users/Makara/Desktop/ferrasuder/FerrasuderChunky/Inc/stm32_acc.h:

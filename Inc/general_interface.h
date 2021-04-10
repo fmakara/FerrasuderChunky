@@ -34,6 +34,7 @@ enum EepromConfigs {
     CFG_VALUE_300,
     CFG_VALUE_350,
     CFG_VALUE_400,
+	CFG_MOV_SENSE,
     CFG_MAX
 };
 
@@ -63,6 +64,10 @@ uint8_t IIC_recv(uint8_t addr, uint8_t *bytes, uint16_t size);
 
 void EEPROM_startup();
 void EEPROM_save(uint8_t cfg);
+
+void ACC_startup();
+uint8_t ACC_isMoving();
+void ACC_setMovementTh(uint8_t sens);
 
 #ifndef IIC_WRITE_BUFFER_MAX
 #define IIC_WRITE_BUFFER_MAX 32

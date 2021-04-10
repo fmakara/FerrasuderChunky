@@ -30,6 +30,7 @@
 #include "stm32_eeprom.h"
 #include "stm32_iic.h"
 #include "stm32_io.h"
+#include "stm32_acc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
