@@ -34,6 +34,9 @@ void ACC_startup(){
     CORE_delay(100);
 	ACC_setCfg8(0x36, 0x00);
 
+	//ACC_setCfg8(0x0F, 0xFF);// Lowest resolution
+	ACC_setCfg8(0x0F, 0xF1);
+	ACC_setCfg8(0x10, 0xE7);// Smaller bandwidth
 	ACC_setCfg8(0x18, 0x1F);// Enable any axis interruption
 	ACC_setCfg8(0x1A, 0x63);// Put any axis interruption on INT1
 	ACC_setCfg8(0x21, 0x1D);// Interrupts are latched

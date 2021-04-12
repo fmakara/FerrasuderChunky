@@ -5,6 +5,7 @@
 #include <string.h>
 #include "general_interface.h"
 #include "control.h"
+#include "smart_leds.h"
 
 #include "oled_128x32.h"
 #include "dict_8px.h"
@@ -24,7 +25,8 @@ void APP_startup(){
     IO_startup();
     CONTROL_startup();
     IO_pwmMosfet(0);
-    
+    SLEDS_startup();
+
     IIC_startup();
     OLED_startup();
     
@@ -183,7 +185,7 @@ const char APP_MENU_STRINGS[13][19] = {
   "Tempo p/ dormir",
   "Temp. inicial",
   "M~o usada",
-  "Sensibilidade",
+  "Sensib. movimento",
   "Cor LED est`vel",
   "Cor LED inst`vel",
   "Unidade Temp.",
