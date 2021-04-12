@@ -69,6 +69,13 @@ void ACC_startup();
 uint8_t ACC_isMoving();
 void ACC_setMovementTh(uint8_t sens);
 
+void NPX_startup();
+void NPX_shutdown();
+void NPX_sendPixel(uint8_t r, uint8_t g, uint8_t b);
+
+void SLEDS_startup();
+void SLEDS_sendPixel(uint32_t combo);
+
 #ifndef IIC_WRITE_BUFFER_MAX
 #define IIC_WRITE_BUFFER_MAX 32
 #endif

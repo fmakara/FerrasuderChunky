@@ -31,6 +31,7 @@
 #include "stm32_iic.h"
 #include "stm32_io.h"
 #include "stm32_acc.h"
+#include "stm32_neopixel.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

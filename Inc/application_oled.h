@@ -54,6 +54,7 @@ void APP_startup(){
     ACC_setMovementTh(APP_cfgs[CFG_MOV_SENSE]);
 
     CONTROL_targetTemp = APP_cfgs[CFG_INITIAL_TEMP];
+    SLEDS_sendPixel(APP_cfgs[CFG_LED_UNSTABLE]);
 }
 void APP_loop(){
     //Prepare to read the bimetalic
@@ -114,12 +115,15 @@ void APP_manageUI(){
         }
     }else if(btn & BTN_CENTER){
         IO_pwmMosfet(0);
+        SLEDS_sendPixel(0);
         APP_mainMenu();
         lastMovement = CORE_getMillis();
+        SLEDS_sendPixel(APP_cfgs[CFG_LED_STABLE]);
     }
     if(userSleep || lastMovement+APP_cfgs[CFG_SLEEP_TIME_S]*1000<CORE_getMillis()){
         //Sleep routine
         IO_pwmMosfet(0);
+        SLEDS_sendPixel(0);
         int16_t *positionsX = (int16_t*)APP_bargraph;
         int16_t *positionsY = positionsX+10;
         int8_t *velocitiesX = (int8_t*)(positionsY+10);
