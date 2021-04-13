@@ -24,17 +24,19 @@ enum EepromConfigs {
     CFG_SLEEP_TIME_S=0,
     CFG_INITIAL_TEMP,
     CFG_USED_HAND,
+    CFG_TEMP_STD,
     CFG_LED_STABLE,
     CFG_LED_UNSTABLE,
-    CFG_TEMP_STD,
-    CFG_VALUE_100,
-    CFG_VALUE_150,
-    CFG_VALUE_200,
-    CFG_VALUE_250,
-    CFG_VALUE_300,
-    CFG_VALUE_350,
-    CFG_VALUE_400,
 	CFG_MOV_SENSE,
+    CFG_CALIB_0,
+    CFG_CALIB_100,
+    CFG_CALIB_188,
+    CFG_CALIB_220,
+    CFG_CALIB_300,
+    CFG_CALIB_400,
+	CFG_PID_P,
+	CFG_PID_I,
+	CFG_PID_D,
     CFG_MAX
 };
 
@@ -75,6 +77,8 @@ void NPX_sendPixel(uint8_t r, uint8_t g, uint8_t b);
 
 void SLEDS_startup();
 void SLEDS_sendPixel(uint32_t combo);
+
+void memcpy_P(void* dest, const void* src, unsigned size);
 
 #ifndef IIC_WRITE_BUFFER_MAX
 #define IIC_WRITE_BUFFER_MAX 32

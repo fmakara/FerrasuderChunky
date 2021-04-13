@@ -13,7 +13,7 @@ void OLED_copySprite8(uint8_t *sprite, uint8_t width, int16_t x, int16_t y, uint
 void OLED_copySprite16(uint16_t *sprite, uint8_t width, int16_t x, int16_t y, uint8_t mode);
 void OLED_copySprite32(uint32_t *sprite, uint8_t width, int16_t x, int16_t y, uint8_t mode);
 void OLED_fastHLine(uint8_t x0, uint8_t y, uint8_t x1, uint8_t color);
-void OLED_fastHLine(uint8_t x, uint8_t y0, uint8_t y1, uint8_t color);
+void OLED_fastVLine(uint8_t x, uint8_t y0, uint8_t y1, uint8_t color);
 void OLED_fastBox(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t color);
 
 #define OLED_IIC_ADDR 0x3C

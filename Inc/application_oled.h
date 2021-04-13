@@ -10,9 +10,13 @@
 #include "oled_128x32.h"
 #include "dict_8px.h"
 #include "dict_16px.h"
+#include "qrcode_32px.h"
 
 void APP_manageUI();
 void APP_mainMenu();
+void APP_calibrateTemperature();
+void APP_calibrateControl();
+
 int32_t APP_readColor(int32_t current);
 int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t type);
 
@@ -26,12 +30,12 @@ void APP_startup(){
     CONTROL_startup();
     IO_pwmMosfet(0);
     SLEDS_startup();
-
     IIC_startup();
     OLED_startup();
-    
+    ACC_startup();
+
     memset(APP_bargraph, 0, sizeof(APP_bargraph));
-    
+
     APP_cfgs[CFG_SLEEP_TIME_S] = 60;
     APP_cfgs[CFG_INITIAL_TEMP] = 190;
     APP_cfgs[CFG_USED_HAND] = VALUE_HAND_RIGHT;
@@ -39,18 +43,21 @@ void APP_startup(){
     APP_cfgs[CFG_LED_UNSTABLE] = (100<<0);
     APP_cfgs[CFG_TEMP_STD] = VALUE_DEG_C;
     APP_cfgs[CFG_SLEEP_TIME_S] = 120;
-    
-    APP_cfgs[CFG_VALUE_100] = 64;
-    APP_cfgs[CFG_VALUE_150] = 104;
-    APP_cfgs[CFG_VALUE_200] = 144;
-    APP_cfgs[CFG_VALUE_250] = 183;
-    APP_cfgs[CFG_VALUE_300] = 223;
-    APP_cfgs[CFG_VALUE_350] = 263;
-    APP_cfgs[CFG_VALUE_400] = 303;
     APP_cfgs[CFG_MOV_SENSE] = 5;
+
+    APP_cfgs[CFG_CALIB_0] = 64;
+    APP_cfgs[CFG_CALIB_100] = 104;
+    APP_cfgs[CFG_CALIB_188] = 144;
+    APP_cfgs[CFG_CALIB_220] = 183;
+    APP_cfgs[CFG_CALIB_300] = 223;
+    APP_cfgs[CFG_CALIB_400] = 263;
+
+    APP_cfgs[CFG_PID_P] = 1.0*(1<<16);
+    APP_cfgs[CFG_PID_I] = 0.1*(1<<16);
+    APP_cfgs[CFG_PID_D] = -1.0*(1<<16);
+
     EEPROM_startup();
 
-    ACC_startup();
     ACC_setMovementTh(APP_cfgs[CFG_MOV_SENSE]);
 
     CONTROL_targetTemp = APP_cfgs[CFG_INITIAL_TEMP];
@@ -70,6 +77,7 @@ void APP_loop(){
     //Run PWM while updating screen
 
 	APP_manageUI();
+	CORE_delay(3);
 }
 
 void APP_degcToUser(int16_t temp, char* str){
@@ -278,8 +286,10 @@ void APP_mainMenu(){
                   EEPROM_save(CFG_TEMP_STD);
                   break;
                case 8://"Calib. Temperatura"
+            	  APP_calibrateTemperature();
                   break;
                case 9://"Calib. Controle"
+             	  APP_calibrateControl();
                   break;
                case 10:// "Sobre"
                   OLED_clearScreen(0);
@@ -300,6 +310,17 @@ void APP_mainMenu(){
                      CORE_delay(50);
                      btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
                   }while(btn==0);
+                  OLED_clearScreen(0);
+                  //DICT8_print("                  ",2,2,WHITE);
+                  DICT8_print("Ajuda/manual:     ",2,12,WHITE);
+                  //DICT8_print("                  ",2,22,WHITE);
+                  DICT32_printQrcodeHelp(128-36);
+                  OLED_display();
+                  do{
+                      CORE_delay(50);
+                      btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
+                  }while(btn==0);
+
                   break;
                default://"Voltar" or error
                   return;
@@ -398,5 +419,11 @@ int32_t APP_readColor(int32_t current){
     }
 }
 
+void APP_calibrateTemperature() {
+
+}
+void APP_calibrateControl() {
+
+}
 
 #endif // _FERRASSUDER__APPLICATION_H_
