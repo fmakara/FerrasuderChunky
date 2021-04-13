@@ -53,6 +53,7 @@ void CORE_startup();
 uint32_t CORE_getMillis();
 uint32_t CORE_getRand();
 void CORE_delay(uint16_t ms);
+void CORE_delayUs(uint16_t us);
 
 void IO_startup();
 uint8_t IO_getButtons();

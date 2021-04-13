@@ -63,21 +63,22 @@ void APP_startup(){
     CONTROL_targetTemp = APP_cfgs[CFG_INITIAL_TEMP];
     SLEDS_sendPixel(APP_cfgs[CFG_LED_UNSTABLE]);
 }
+#include "stm32f0xx_hal_gpio.h"
 void APP_loop(){
     //Prepare to read the bimetalic
-//    IO_pwmMosfet(0);
-//    CORE_delay(1);
-//    //Calculate command
-//    int16_t raw = CONTROL_readFilterRawTemperature();
-//    CONTROL_currentTemp = CONTROL_rawToC(raw);
-//    int32_t command = CONTROL_calculateComand();
-//    CONTROL_currentCommand_percent = CONTROL_commandToPercent(command);
-//    //Activate PWM
-//    IO_pwmMosfet(CONTROL_currentCommand_percent);
-    //Run PWM while updating screen
+    IO_pwmMosfet(0);
+    CORE_delayUs(50);// Wait a full PWM cycle...
+    CORE_delayUs(100);// Then wait a little more
 
+    //Calculate command
+    int16_t raw = CONTROL_readFilterRawTemperature();
+    CONTROL_currentTemp = CONTROL_rawToC(raw);
+    int32_t command = CONTROL_calculateComand();
+    CONTROL_currentCommand_percent = CONTROL_commandToPercent(command);
+    //Activate PWM
+    IO_pwmMosfet(CONTROL_currentCommand_percent);
+    //Run PWM while updating screen
 	APP_manageUI();
-	CORE_delay(3);
 }
 
 void APP_degcToUser(int16_t temp, char* str){
@@ -420,9 +421,35 @@ int32_t APP_readColor(int32_t current){
 }
 
 void APP_calibrateTemperature() {
+    int8_t btn;
+	OLED_clearScreen(0);
+    DICT8_print("Favor usar        ",2,2,WHITE);
+    DICT8_print("manual p/         ",2,12,WHITE);
+    DICT8_print("procedimento:     ",2,22,WHITE);
+    DICT32_printQrcodeHelp(128-36);
+    OLED_display();
+    do{
+        CORE_delay(50);
+        btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
+    }while(btn==0);
+
+
+
 
 }
+
 void APP_calibrateControl() {
+	int8_t btn;
+	OLED_clearScreen(0);
+	DICT8_print("Favor usar        ",2,2,WHITE);
+	DICT8_print("manual p/         ",2,12,WHITE);
+	DICT8_print("procedimento:     ",2,22,WHITE);
+	DICT32_printQrcodeHelp(128-36);
+	OLED_display();
+	do{
+		CORE_delay(50);
+		btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
+	}while(btn==0);
 
 }
 

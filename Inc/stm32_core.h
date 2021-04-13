@@ -22,6 +22,19 @@ uint32_t CORE_getRand(){
 void CORE_delay(uint16_t ms){
 	HAL_Delay(ms);
 }
+void CORE_delayUs(uint16_t us){
+	for(uint16_t i=0; i<us; i++){
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");asm("NOP");asm("NOP");asm("NOP");asm("NOP");
+		asm("NOP");
+	}
+}
 void memcpy_P(void* dest, const void* src, unsigned size){
 	memcpy(dest, src, size);
 }
