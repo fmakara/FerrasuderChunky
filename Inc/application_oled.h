@@ -67,8 +67,7 @@ void APP_startup(){
 void APP_loop(){
     //Prepare to read the bimetalic
     IO_pwmMosfet(0);
-    CORE_delayUs(50);// Wait a full PWM cycle...
-    CORE_delayUs(100);// Then wait a little more
+    CORE_delayUs(500);
     //Calculate command
     int16_t raw = CONTROL_readFilterRawTemperature();
     CONTROL_currentTemp = CONTROL_rawToC(raw);
