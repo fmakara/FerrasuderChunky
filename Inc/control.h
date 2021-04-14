@@ -8,14 +8,14 @@ void CONTROL_startup();
 int16_t CONTROL_readFilterRawTemperature();
 int16_t CONTROL_rawToC(int16_t raw);
 int32_t CONTROL_calculateComand();
-int16_t CONTROL_commandToPercent(int32_t command);
+int16_t CONTROL_commandToPermil(int32_t command);
 void CONTROL_generateHighPWM();
 void CONTROL_generateLowPWM();
 void CONTROL_waitUntilCanReadTemp();
 
 int16_t CONTROL_targetTemp;
 int16_t CONTROL_currentTemp;
-int16_t CONTROL_currentCommand_percent;
+int16_t CONTROL_currentCommand_permil;
 // T[ºc] = alpha + beta*raw
 int16_t CONTROL_rawCoeffAlpha;
 int16_t CONTROL_rawCoeffBeta_x256;
@@ -40,7 +40,7 @@ uint64_t CONTROL_PWMnextLow;
 void CONTROL_startup(){
     CONTROL_targetTemp = 0;
     CONTROL_currentTemp = 0;
-    CONTROL_currentCommand_percent = 0;
+    CONTROL_currentCommand_permil = 0;
     CONTROL_rawCoeffAlpha = 20;
     CONTROL_rawCoeffBeta_x256 = 321; //(183-20)/130
     CONTROL_PWMnextHigh = 0;
@@ -79,9 +79,9 @@ int32_t CONTROL_calculateComand(){
     return c;
 }
 
-int16_t CONTROL_commandToPercent(int32_t command){
+int16_t CONTROL_commandToPermil(int32_t command){
     if(command<0)return 0;
-    if(command>100)return 100;
+    if(command>1000)return 1000;
     return command;
 }
 /*

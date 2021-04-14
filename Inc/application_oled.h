@@ -69,16 +69,16 @@ void APP_loop(){
     IO_pwmMosfet(0);
     CORE_delayUs(50);// Wait a full PWM cycle...
     CORE_delayUs(100);// Then wait a little more
-
     //Calculate command
     int16_t raw = CONTROL_readFilterRawTemperature();
     CONTROL_currentTemp = CONTROL_rawToC(raw);
     int32_t command = CONTROL_calculateComand();
-    CONTROL_currentCommand_percent = CONTROL_commandToPercent(command);
+    CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
     //Activate PWM
-    IO_pwmMosfet(CONTROL_currentCommand_percent);
+    IO_pwmMosfet(CONTROL_currentCommand_permil);
     //Run PWM while updating screen
 	APP_manageUI();
+	CORE_delay(10);
 }
 
 void APP_degcToUser(int16_t temp, char* str){
@@ -182,7 +182,7 @@ void APP_manageUI(){
         for(uint8_t i=0; i < (sizeof(APP_bargraph)/4)-1 ; i++){
             APP_bargraph[i] = APP_bargraph[i+1];
         }
-        uint16_t bars = 32-(CONTROL_currentCommand_percent*32)/100;
+        uint16_t bars = 32-((CONTROL_currentCommand_permil>>3)*32)/125;
         uint64_t lastBar = 0xFFFFFFFF-((1ULL<<bars)-1);
         APP_bargraph[(sizeof(APP_bargraph)/4)-1] = lastBar;
         graphDivider = 0;

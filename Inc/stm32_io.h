@@ -56,11 +56,25 @@ uint8_t IO_getButtons(){
     lastCmd = currCmd;
     return ret;
 }
+
+extern ADC_HandleTypeDef hadc;
+
 uint16_t IO_getRawTemp(){
-    return 0;//analogRead(PIN_TEMP);
+	HAL_ADC_Start(&hadc);
+	HAL_ADC_PollForConversion(&hadc, HAL_MAX_DELAY);
+	HAL_ADC_GetValue(&hadc);
+	HAL_ADC_PollForConversion(&hadc, HAL_MAX_DELAY);
+	uint16_t ret = HAL_ADC_GetValue(&hadc);
+	HAL_ADC_Stop(&hadc);
+	return ret;
 }
+
 uint16_t IO_getRawVoltage(){
-    return 0;//analogRead(PIN_VOLT);
+	HAL_ADC_Start(&hadc);
+	HAL_ADC_PollForConversion(&hadc, HAL_MAX_DELAY);
+	uint16_t ret = HAL_ADC_GetValue(&hadc);
+	HAL_ADC_Stop(&hadc);
+	return ret;
 }
 void IO_pwmMosfet(uint16_t permil){
 	if(permil>1000)permil = 1000;

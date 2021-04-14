@@ -1,4 +1,9 @@
 #MicroXplorer Configuration settings - do not modify
+ADC.ClockPrescaler=ADC_CLOCK_ASYNC_DIV1
+ADC.ContinuousConvMode=ENABLE
+ADC.ExternalTrigConv=ADC_SOFTWARE_START
+ADC.IPParameters=ClockPrescaler,ContinuousConvMode,SamplingTime,ExternalTrigConv
+ADC.SamplingTime=ADC_SAMPLETIME_239CYCLES_5
 File.Version=6
 I2C1.I2C_Speed_Mode=I2C_Fast
 I2C1.IPParameters=Timing,I2C_Speed_Mode,Speed
