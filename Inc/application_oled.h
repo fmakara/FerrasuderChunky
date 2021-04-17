@@ -18,11 +18,29 @@ void APP_calibrateTemperature();
 void APP_calibrateControl();
 
 int32_t APP_readColor(int32_t current);
-int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t type);
+int32_t APP_readInteger(int32_t curr, int32_t min, int32_t max, int32_t step, uint8_t type);
 
 uint32_t APP_bargraph[40];
 int32_t APP_cfgs[CFG_MAX];
 extern int16_t CONTROL_targetTemp, CONTROL_currentTemp, CONTROL_currentCommand_percent;
+
+uint8_t APP_waitForButtonPress(uint8_t used){
+	uint8_t btn;
+	do{
+		CORE_delay(50);
+		btn = IO_getButtons()&used;
+	}while(btn==0);
+	return btn;
+}
+
+uint8_t APP_waitForButtonRelease(uint8_t used){
+	uint8_t btn;
+	do{
+		CORE_delay(50);
+		btn = IO_getButtons()&used;
+	}while(btn!=0);
+	return btn;
+}
 
 void APP_startup(){
     CORE_startup();
@@ -216,10 +234,7 @@ void APP_mainMenu(){
         DICT8_print(APP_MENU_STRINGS[menuIdx+1],12,12,WHITE);
         DICT8_print(APP_MENU_STRINGS[menuIdx+2],2,22,WHITE);
         OLED_display();
-        do{
-           CORE_delay(50);
-           btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-        }while(btn==0);
+        btn = APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
         if( (btn&BTN_DOWN) && (menuIdx<11) ){
             menuIdx++;
         }else if( (btn&BTN_UP) && (menuIdx>0) ){
@@ -240,10 +255,7 @@ void APP_mainMenu(){
                   DICT8_print("  Aperte o bot~o  ",2,12,WHITE);
                   DICT8_print("'cima' equivalente",2,22,WHITE);
                   OLED_display();
-                  do{
-                     CORE_delay(50);
-                     btn = IO_getButtons()&(BTN_UP|BTN_DOWN);
-                  }while(btn==0);
+                  btn = APP_waitForButtonPress(BTN_UP|BTN_DOWN);
                   if(btn == BTN_DOWN){
                       APP_cfgs[CFG_USED_HAND] = !APP_cfgs[CFG_USED_HAND];
                       EEPROM_save(CFG_USED_HAND);
@@ -251,6 +263,7 @@ void APP_mainMenu(){
                   IO_getButtons();
                   IO_getButtons();
                   OLED_display();
+                  APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN);
                   break;
 
                case 4://"Sensibilidade"
@@ -272,10 +285,7 @@ void APP_mainMenu(){
                   DICT8_print("          Celcius ",2,12,WHITE);
                   DICT8_print(" Kelvin           ",2,22,WHITE);
                   OLED_display();
-                  do{
-                     CORE_delay(50);
-                     btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-                  }while(btn==0);
+                  btn = APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   if(btn & BTN_CENTER){
                       APP_cfgs[CFG_TEMP_STD] = VALUE_DEG_C;
                   }else if(btn & BTN_UP){
@@ -284,6 +294,7 @@ void APP_mainMenu(){
                       APP_cfgs[CFG_TEMP_STD] = VALUE_DEG_K;
                   }
                   EEPROM_save(CFG_TEMP_STD);
+                  APP_waitForButtonRelease(BTN_UP|BTN_DOWN|BTN_CENTER);
                   break;
                case 8://"Calib. Temperatura"
             	  APP_calibrateTemperature();
@@ -297,30 +308,23 @@ void APP_mainMenu(){
                   DICT8_print("C.N. 'Ferrassuder'",2,12,WHITE);
                   DICT8_print("   FW. ver. 1.0   ",2,22,WHITE);
                   OLED_display();
-                  do{
-                     CORE_delay(50);
-                     btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-                  }while(btn==0);
+                  APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   OLED_clearScreen(0);
                   DICT8_print(" Desenvolvida por ",2,2,WHITE);
                   DICT8_print(" Felipe & Eduardo ",2,12,WHITE);
                   DICT8_print(" Makara   Jagher  ",2,22,WHITE);
                   OLED_display();
-                  do{
-                     CORE_delay(50);
-                     btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-                  }while(btn==0);
+                  APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   OLED_clearScreen(0);
                   //DICT8_print("                  ",2,2,WHITE);
                   DICT8_print("Ajuda/manual:     ",2,12,WHITE);
                   //DICT8_print("                  ",2,22,WHITE);
                   DICT32_printQrcodeHelp(128-36);
                   OLED_display();
-                  do{
-                      CORE_delay(50);
-                      btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-                  }while(btn==0);
-
+                  APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   break;
                default://"Voltar" or error
                   return;
@@ -329,8 +333,36 @@ void APP_mainMenu(){
     }
 }
 
-int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step, uint8_t type){
-    uint8_t wait=0, btn;
+uint8_t APP_singleValueChanger(int16_t* val, int32_t inc, uint8_t* timer, uint8_t hold){
+	uint8_t btn = IO_getButtons();
+	if(btn&BTN_CENTER)return 1;
+	if(btn&BTN_UP){
+		*val += inc;
+	} else if(btn&BTN_DOWN){
+		*val -= inc;
+	}
+	if(hold==255)return 0;
+	if(btn&BTN_HOLD_UP){
+		if(*timer>hold){
+			*val += inc;
+		} else {
+			(*timer)++;
+		}
+	} else if(btn&BTN_HOLD_DOWN){
+		if(*timer>hold){
+			*val -= inc;
+		} else {
+			(*timer)++;
+		}
+	} else {
+		*timer = 0;
+	}
+	return 0;
+}
+
+int32_t APP_readInteger(int32_t curr, int32_t min, int32_t max, int32_t step, uint8_t type){
+    uint8_t wait=0;
+    int16_t current = curr;
     while(1){
         OLED_clearScreen(0);
         if((current==0) && (type!=0)){
@@ -344,71 +376,28 @@ int32_t APP_readInteger(int32_t current, int32_t min, int32_t max, int32_t step,
         }
         OLED_display();
         
-        btn = IO_getButtons();
-        if(btn & BTN_UP){
-            current += step;
-            wait = 20;
-        }else if(btn & BTN_DOWN){
-            current -= step;
-            wait = 20;
-        }else if(btn & BTN_HOLD_UP){
-            if(wait==0){
-                current += step;
-                wait = 5;
-            }else{
-                wait--;
-            }
-        }else if(btn & BTN_HOLD_DOWN){
-            if(wait==0){
-                current -= step;
-                wait = 5;
-            }else{
-                wait--;
-            }
-        }else if(btn & BTN_CENTER){
-            return current;
-        }
+        if(APP_singleValueChanger(&current, step, &wait, 20))return current;
         if(current<min)current = min;
         if(current>max)current = max;
     }
 }
 
 int32_t APP_readColor(int32_t current){
-    int8_t wait=0, btn, idx=0, color[3];
+    uint8_t wait=0, idx=0;
+    int16_t color[3];
     char temp[20];
     color[0] = (current>>0)&0xFF;
     color[1] = (current>>8)&0xFF;
     color[2] = (current>>16)&0xFF;
     while(1){
         OLED_clearScreen(0);
-        sprintf(temp,"%3d %3d %3d",color[0],color[1],color[2]);
+        sprintf(temp,"%3d %3d %3d",(int)color[0],(int)color[1],(int)color[2]);
         DICT8_print(temp,10,12,WHITE);
         DICT8_print(" R   G   B",10,0,WHITE);
         OLED_fastHLine(10+idx*28, 22, 38+idx*28, 1);
         OLED_display();
-        
-        btn = IO_getButtons();
-        if(btn & BTN_UP){
-            color[idx] += 5;
-            wait = 20;
-        }else if(btn & BTN_DOWN){
-            color[idx] -= 5;
-            wait = 20;
-        }else if(btn & BTN_HOLD_UP){
-            if(wait==0){
-                color[idx] += 5;
-                wait = 5;
-            }else{
-                wait--;
-            }
-        }else if(btn & BTN_HOLD_DOWN){
-            if(wait==0){
-                color[idx] -= 5;
-                wait = 5;
-            }else{
-                wait--;
-            }
-        }else if(btn & BTN_CENTER){
+
+        if(APP_singleValueChanger(&color[idx], 5, &wait, 20)){
             idx++;
             if(idx>=3){
                 return (color[0]<<0)|((int32_t)color[1]<<8)|((int32_t)color[2]<<16);
@@ -420,21 +409,248 @@ int32_t APP_readColor(int32_t current){
 }
 
 void APP_calibrateTemperature() {
-    int8_t btn;
 	OLED_clearScreen(0);
     DICT8_print("Favor usar        ",2,2,WHITE);
     DICT8_print("manual p/         ",2,12,WHITE);
     DICT8_print("procedimento:     ",2,22,WHITE);
     DICT32_printQrcodeHelp(128-36);
     OLED_display();
-    do{
-        CORE_delay(50);
-        btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-    }while(btn==0);
+    APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
 
+	uint16_t selection = 0;
+	uint8_t wait = 0;
+    while(1){
+    	selection = CONTROL_readFilterRawTemperature();
+    	IO_pwmMosfet(0);
 
+    	OLED_clearScreen(0);
+    	DICT8_print("PWR: 0        ",2,2,WHITE);
+        DICT8_print("Aperte p/ 0;  ",2,12,WHITE);
+        char buff[20];
+        sprintf(buff, "leitura: %04d ", selection);
+        DICT8_print(buff,2,22,WHITE);
+    	OLED_display();
 
+		if(IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER))break;
+		CORE_delay(50);
+    }
+    IO_pwmMosfet(0);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_cfgs[CFG_CALIB_0] = selection;
+    APP_cfgs[CFG_CALIB_100] = selection+100;
+    APP_cfgs[CFG_CALIB_188] = selection+200;
+    APP_cfgs[CFG_CALIB_220] = selection+300;
+    APP_cfgs[CFG_CALIB_300] = selection+400;
+    APP_cfgs[CFG_CALIB_400] = selection+500;
 
+    while(1){
+    	CONTROL_targetTemp = 100;
+        IO_pwmMosfet(0);
+        CORE_delayUs(500);
+    	int16_t raw = CONTROL_readFilterRawTemperature();
+        CONTROL_currentTemp = CONTROL_rawToC(raw);
+        int32_t command = CONTROL_calculateComand();
+        CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
+        IO_pwmMosfet(CONTROL_currentCommand_permil);
+
+    	OLED_clearScreen(0);
+        char buff[20];
+        sprintf(buff, "PWR: %03d  ", CONTROL_currentCommand_permil);
+    	DICT8_print(buff,2,2,WHITE);
+        sprintf(buff, "%03d;C / 100;C", CONTROL_currentTemp);
+        DICT8_print(buff,2,12,WHITE);
+        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_100]);
+        DICT8_print(buff,2,22,WHITE);
+    	OLED_display();
+
+    	int16_t setpoint = APP_cfgs[CFG_CALIB_100];
+        if(APP_singleValueChanger(&setpoint, 1, &wait, 20)){
+        	break;
+        }
+        if(setpoint<=APP_cfgs[CFG_CALIB_0]){
+        	setpoint = 1+APP_cfgs[CFG_CALIB_0];
+        }
+        APP_cfgs[CFG_CALIB_100] = setpoint;
+    	// Making sure this next transition is somewhat linear...
+        APP_cfgs[CFG_CALIB_188] = 2*setpoint-APP_cfgs[CFG_CALIB_0];
+
+		CORE_delay(20);
+    }
+    IO_pwmMosfet(0);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_cfgs[CFG_CALIB_188] = APP_cfgs[CFG_CALIB_100]+((APP_cfgs[CFG_CALIB_100]-APP_cfgs[CFG_CALIB_0])*9)/10;
+    APP_cfgs[CFG_CALIB_220] = APP_cfgs[CFG_CALIB_188]+((APP_cfgs[CFG_CALIB_100]-APP_cfgs[CFG_CALIB_0])*3)/10;
+    APP_cfgs[CFG_CALIB_300] = APP_cfgs[CFG_CALIB_220]+((APP_cfgs[CFG_CALIB_100]-APP_cfgs[CFG_CALIB_0])*7)/10;
+    APP_cfgs[CFG_CALIB_400] = APP_cfgs[CFG_CALIB_300]+(APP_cfgs[CFG_CALIB_100]-APP_cfgs[CFG_CALIB_0]);
+
+    while(1){
+    	CONTROL_targetTemp = 188;
+        IO_pwmMosfet(0);
+        CORE_delayUs(500);
+    	int16_t raw = CONTROL_readFilterRawTemperature();
+        CONTROL_currentTemp = CONTROL_rawToC(raw);
+        int32_t command = CONTROL_calculateComand();
+        CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
+        IO_pwmMosfet(CONTROL_currentCommand_permil);
+
+    	OLED_clearScreen(0);
+        char buff[20];
+        sprintf(buff, "PWR: %03d  ", CONTROL_currentCommand_permil);
+    	DICT8_print(buff,2,2,WHITE);
+        sprintf(buff, "%03d;C / 188;C", CONTROL_currentTemp);
+        DICT8_print(buff,2,12,WHITE);
+        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_188]);
+        DICT8_print(buff,2,22,WHITE);
+    	OLED_display();
+
+    	int16_t setpoint = APP_cfgs[CFG_CALIB_188];
+        if(APP_singleValueChanger(&setpoint, 1, &wait, 20)){
+        	break;
+        }
+        if(setpoint<=APP_cfgs[CFG_CALIB_100]){
+        	setpoint = 1+APP_cfgs[CFG_CALIB_100];
+        }
+        APP_cfgs[CFG_CALIB_188] = setpoint;
+    	// Making sure this next transition is somewhat linear...
+        APP_cfgs[CFG_CALIB_220] = APP_cfgs[CFG_CALIB_188]+(APP_cfgs[CFG_CALIB_188]-APP_cfgs[CFG_CALIB_100])/3;
+
+		CORE_delay(20);
+    }
+    IO_pwmMosfet(0);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_cfgs[CFG_CALIB_220] = APP_cfgs[CFG_CALIB_188]+(APP_cfgs[CFG_CALIB_188]-APP_cfgs[CFG_CALIB_100])/3;
+    APP_cfgs[CFG_CALIB_300] = APP_cfgs[CFG_CALIB_220]+((APP_cfgs[CFG_CALIB_188]-APP_cfgs[CFG_CALIB_100])*8)/9;
+    APP_cfgs[CFG_CALIB_400] = APP_cfgs[CFG_CALIB_300]+((APP_cfgs[CFG_CALIB_188]-APP_cfgs[CFG_CALIB_100])*10)/9;
+
+    while(1){
+    	CONTROL_targetTemp = 220;
+        IO_pwmMosfet(0);
+        CORE_delayUs(500);
+    	int16_t raw = CONTROL_readFilterRawTemperature();
+        CONTROL_currentTemp = CONTROL_rawToC(raw);
+        int32_t command = CONTROL_calculateComand();
+        CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
+        IO_pwmMosfet(CONTROL_currentCommand_permil);
+
+    	OLED_clearScreen(0);
+        char buff[20];
+        sprintf(buff, "PWR: %03d  ", CONTROL_currentCommand_permil);
+    	DICT8_print(buff,2,2,WHITE);
+        sprintf(buff, "%03d;C / 220;C", CONTROL_currentTemp);
+        DICT8_print(buff,2,12,WHITE);
+        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_220]);
+        DICT8_print(buff,2,22,WHITE);
+    	OLED_display();
+
+    	int16_t setpoint = APP_cfgs[CFG_CALIB_220];
+        if(APP_singleValueChanger(&setpoint, 1, &wait, 20)){
+        	break;
+        }
+        if(setpoint<=APP_cfgs[CFG_CALIB_188]){
+        	setpoint = 1+APP_cfgs[CFG_CALIB_188];
+        }
+        APP_cfgs[CFG_CALIB_220] = setpoint;
+    	// Making sure this next transition is somewhat linear...
+        APP_cfgs[CFG_CALIB_300] = APP_cfgs[CFG_CALIB_220]+((APP_cfgs[CFG_CALIB_220]-APP_cfgs[CFG_CALIB_188])*8)/3;
+
+		CORE_delay(20);
+    }
+    IO_pwmMosfet(0);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_cfgs[CFG_CALIB_300] = APP_cfgs[CFG_CALIB_220]+((APP_cfgs[CFG_CALIB_220]-APP_cfgs[CFG_CALIB_188])*8)/3;
+    APP_cfgs[CFG_CALIB_400] = APP_cfgs[CFG_CALIB_300]+((APP_cfgs[CFG_CALIB_220]-APP_cfgs[CFG_CALIB_188])*10)/3;
+
+    while(1){
+    	CONTROL_targetTemp = 300;
+        IO_pwmMosfet(0);
+        CORE_delayUs(500);
+    	int16_t raw = CONTROL_readFilterRawTemperature();
+        CONTROL_currentTemp = CONTROL_rawToC(raw);
+        int32_t command = CONTROL_calculateComand();
+        CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
+        IO_pwmMosfet(CONTROL_currentCommand_permil);
+
+    	OLED_clearScreen(0);
+        char buff[20];
+        sprintf(buff, "PWR: %03d  ", CONTROL_currentCommand_permil);
+    	DICT8_print(buff,2,2,WHITE);
+        sprintf(buff, "%03d;C / 300;C", CONTROL_currentTemp);
+        DICT8_print(buff,2,12,WHITE);
+        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_300]);
+        DICT8_print(buff,2,22,WHITE);
+    	OLED_display();
+
+    	int16_t setpoint = APP_cfgs[CFG_CALIB_300];
+        if(APP_singleValueChanger(&setpoint, 1, &wait, 20)){
+        	break;
+        }
+        if(setpoint<=APP_cfgs[CFG_CALIB_220]){
+        	setpoint = 1+APP_cfgs[CFG_CALIB_220];
+        }
+        APP_cfgs[CFG_CALIB_300] = setpoint;
+    	// Making sure this next transition is somewhat linear...
+        APP_cfgs[CFG_CALIB_400] = APP_cfgs[CFG_CALIB_300]+((APP_cfgs[CFG_CALIB_300]-APP_cfgs[CFG_CALIB_220])*10)/8;
+
+		CORE_delay(20);
+    }
+    IO_pwmMosfet(0);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_cfgs[CFG_CALIB_400] = APP_cfgs[CFG_CALIB_300]+((APP_cfgs[CFG_CALIB_300]-APP_cfgs[CFG_CALIB_220])*10)/8;
+
+    while(1){
+    	CONTROL_targetTemp = 400;
+        IO_pwmMosfet(0);
+        CORE_delayUs(500);
+    	int16_t raw = CONTROL_readFilterRawTemperature();
+        CONTROL_currentTemp = CONTROL_rawToC(raw);
+        int32_t command = CONTROL_calculateComand();
+        CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
+        IO_pwmMosfet(CONTROL_currentCommand_permil);
+
+    	OLED_clearScreen(0);
+        char buff[20];
+        sprintf(buff, "PWR: %03d  ", CONTROL_currentCommand_permil);
+    	DICT8_print(buff,2,2,WHITE);
+        sprintf(buff, "%03d;C / 400;C", CONTROL_currentTemp);
+        DICT8_print(buff,2,12,WHITE);
+        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_400]);
+        DICT8_print(buff,2,22,WHITE);
+    	OLED_display();
+
+    	int16_t setpoint = APP_cfgs[CFG_CALIB_400];
+        if(APP_singleValueChanger(&setpoint, 1, &wait, 20)){
+        	break;
+        }
+        if(setpoint<=APP_cfgs[CFG_CALIB_300]){
+        	setpoint = 1+APP_cfgs[CFG_CALIB_300];
+        }
+        APP_cfgs[CFG_CALIB_400] = setpoint;
+		CORE_delay(20);
+    }
+    IO_pwmMosfet(0);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+
+	OLED_clearScreen(0);
+    DICT8_print("Qualquer bot~o p/ ",2,2,WHITE);
+    DICT8_print(" salvar. Desligue ",2,12,WHITE);
+    DICT8_print("    p/ voltar     ",2,22,WHITE);
+	OLED_display();
+
+    APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+
+    EEPROM_save(CFG_CALIB_0);
+    EEPROM_save(CFG_CALIB_100);
+    EEPROM_save(CFG_CALIB_188);
+    EEPROM_save(CFG_CALIB_220);
+    EEPROM_save(CFG_CALIB_300);
+    EEPROM_save(CFG_CALIB_400);
+
+	OLED_clearScreen(0);
+    DICT8_print("      Salvo!      ",2,12,WHITE);
+	OLED_display();
+	CORE_delay(500);
 }
 
 void APP_calibrateControl() {
@@ -449,6 +665,10 @@ void APP_calibrateControl() {
 		CORE_delay(50);
 		btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
 	}while(btn==0);
+	do{
+		CORE_delay(50);
+		btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
+	}while(btn!=0);
 
 }
 

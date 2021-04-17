@@ -16,10 +16,6 @@ void CONTROL_waitUntilCanReadTemp();
 int16_t CONTROL_targetTemp;
 int16_t CONTROL_currentTemp;
 int16_t CONTROL_currentCommand_permil;
-// T[ºc] = alpha + beta*raw
-int16_t CONTROL_rawCoeffAlpha;
-int16_t CONTROL_rawCoeffBeta_x256;
-
 
 uint64_t CONTROL_PWMnextHigh;
 uint64_t CONTROL_PWMnextLow;
@@ -41,8 +37,6 @@ void CONTROL_startup(){
     CONTROL_targetTemp = 0;
     CONTROL_currentTemp = 0;
     CONTROL_currentCommand_permil = 0;
-    CONTROL_rawCoeffAlpha = 20;
-    CONTROL_rawCoeffBeta_x256 = 321; //(183-20)/130
     CONTROL_PWMnextHigh = 0;
     CONTROL_PWMnextLow = 0;
 }
@@ -62,8 +56,36 @@ int16_t CONTROL_readFilterRawTemperature(){
 }
 
 int16_t CONTROL_rawToC(int16_t raw){
-    return (((int32_t)raw*(int32_t)CONTROL_rawCoeffBeta_x256)>>8)+CONTROL_rawCoeffAlpha;
-    //return raw;
+	// Piecewise correlation
+	int32_t a, b, ta, tb;
+	if (raw<APP_cfgs[CFG_CALIB_100]) {
+		a = APP_cfgs[CFG_CALIB_0];
+		b = APP_cfgs[CFG_CALIB_100];
+		ta = 0;
+		tb = 100;
+	} else if(raw<APP_cfgs[CFG_CALIB_188]) {
+		a = APP_cfgs[CFG_CALIB_100];
+		b = APP_cfgs[CFG_CALIB_188];
+		ta = 100;
+		tb = 188;
+	} else if(raw<APP_cfgs[CFG_CALIB_220]) {
+		a = APP_cfgs[CFG_CALIB_188];
+		b = APP_cfgs[CFG_CALIB_220];
+		ta = 188;
+		tb = 220;
+	} else if(raw<APP_cfgs[CFG_CALIB_300]) {
+		a = APP_cfgs[CFG_CALIB_220];
+		b = APP_cfgs[CFG_CALIB_300];
+		ta = 220;
+		tb = 300;
+	} else {
+		a = APP_cfgs[CFG_CALIB_300];
+		b = APP_cfgs[CFG_CALIB_400];
+		ta = 300;
+		tb = 400;
+	}
+	int32_t r = (((int32_t)raw-a)*1024)/(b-a);
+	return ta + ((r*(tb-ta))/1024);
 }
 
 int32_t CONTROL_calculateComand(){
