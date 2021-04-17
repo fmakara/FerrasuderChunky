@@ -85,7 +85,7 @@ void APP_startup(){
 void APP_loop(){
     //Prepare to read the bimetalic
     IO_pwmMosfet(0);
-    CORE_delayUs(500);
+    CORE_delayUs(1000);
     //Calculate command
     int16_t raw = CONTROL_readFilterRawTemperature();
     CONTROL_currentTemp = CONTROL_rawToC(raw);
@@ -242,10 +242,12 @@ void APP_mainMenu(){
         }else if(btn&BTN_CENTER){
             switch(menuIdx){
                case 1://"Tempo p/ dormir"
+                  OLED_clearScreen(0);
                   APP_cfgs[CFG_SLEEP_TIME_S] = APP_readInteger(APP_cfgs[CFG_SLEEP_TIME_S], 0, 900, 5, 1);
                   EEPROM_save(CFG_SLEEP_TIME_S);
                   break;
                case 2://"Temp. inicial"
+                  OLED_clearScreen(0);
                   APP_cfgs[CFG_INITIAL_TEMP] = APP_readInteger(APP_cfgs[CFG_INITIAL_TEMP], 100, 400, 5, 2);
                   EEPROM_save(CFG_INITIAL_TEMP);
                   break;
@@ -267,15 +269,18 @@ void APP_mainMenu(){
                   break;
 
                case 4://"Sensibilidade"
+                  OLED_clearScreen(0);
                   APP_cfgs[CFG_MOV_SENSE] = APP_readInteger(APP_cfgs[CFG_MOV_SENSE], 0, 10, 1, 0);
                   EEPROM_save(CFG_MOV_SENSE);
                   ACC_setMovementTh(APP_cfgs[CFG_MOV_SENSE]);
                   break;
                case 5://"Cor LED estavel"
+                  OLED_clearScreen(0);
                   APP_cfgs[CFG_LED_STABLE] = APP_readColor(APP_cfgs[CFG_LED_STABLE]);
                   EEPROM_save(CFG_LED_STABLE);
                   break;
                case 6://"Cor LED instavel"
+                  OLED_clearScreen(0);
                   APP_cfgs[CFG_LED_UNSTABLE] = APP_readColor(APP_cfgs[CFG_LED_UNSTABLE]);
                   EEPROM_save(CFG_LED_UNSTABLE);
                   break;
@@ -284,8 +289,8 @@ void APP_mainMenu(){
                   DICT8_print(" Fahrenheit       ",2,2,WHITE);
                   DICT8_print("          Celcius ",2,12,WHITE);
                   DICT8_print(" Kelvin           ",2,22,WHITE);
-                  OLED_display();
-                  btn = APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  OLED_display();;
+                  APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
                   if(btn & BTN_CENTER){
                       APP_cfgs[CFG_TEMP_STD] = VALUE_DEG_C;
                   }else if(btn & BTN_UP){
@@ -294,7 +299,7 @@ void APP_mainMenu(){
                       APP_cfgs[CFG_TEMP_STD] = VALUE_DEG_K;
                   }
                   EEPROM_save(CFG_TEMP_STD);
-                  APP_waitForButtonRelease(BTN_UP|BTN_DOWN|BTN_CENTER);
+                  APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   break;
                case 8://"Calib. Temperatura"
             	  APP_calibrateTemperature();
@@ -307,23 +312,23 @@ void APP_mainMenu(){
                   DICT8_print("Microesta{~o TS-12",2,2,WHITE);
                   DICT8_print("C.N. 'Ferrassuder'",2,12,WHITE);
                   DICT8_print("   FW. ver. 1.0   ",2,22,WHITE);
-                  OLED_display();
-                  APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  OLED_display();;
+                  APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
                   APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   OLED_clearScreen(0);
                   DICT8_print(" Desenvolvida por ",2,2,WHITE);
                   DICT8_print(" Felipe & Eduardo ",2,12,WHITE);
                   DICT8_print(" Makara   Jagher  ",2,22,WHITE);
-                  OLED_display();
-                  APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  OLED_display();;
+                  APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
                   APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   OLED_clearScreen(0);
                   //DICT8_print("                  ",2,2,WHITE);
                   DICT8_print("Ajuda/manual:     ",2,12,WHITE);
                   //DICT8_print("                  ",2,22,WHITE);
                   DICT32_printQrcodeHelp(128-36);
-                  OLED_display();
-                  APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+                  OLED_display();;
+                  APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
                   APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
                   break;
                default://"Voltar" or error
@@ -364,15 +369,15 @@ int32_t APP_readInteger(int32_t curr, int32_t min, int32_t max, int32_t step, ui
     uint8_t wait=0;
     int16_t current = curr;
     while(1){
-        OLED_clearScreen(0);
+    	OLED_fastBox(16,10,90,26,BLACK);// OLED_clearScreen(0);
         if((current==0) && (type!=0)){
             DICT8_print("OFF",25,12,WHITE);
         }else{
             char str[5];
             if(type==2)APP_degcToUser(current, str);
             else sprintf(str,"%4d",(int)current);
-            DICT16_print(str,16,8,WHITE);
-            if(type==1)DICT8_print("S",75,16,WHITE);
+            DICT16_print(str,16,10,WHITE);
+            if(type==1)DICT8_print("S",75,18,WHITE);
         }
         OLED_display();
         
@@ -380,6 +385,50 @@ int32_t APP_readInteger(int32_t curr, int32_t min, int32_t max, int32_t step, ui
         if(current<min)current = min;
         if(current>max)current = max;
     }
+}
+
+int32_t APP_readFixed(int32_t curr, int32_t min, int32_t max){
+	uint8_t wait=0;
+	while(1){
+		OLED_fastBox(0,10,127,26,BLACK);
+		char str[20];
+		int32_t bfr,aft;
+		bfr = curr/1000;
+		aft = curr%1000;
+		sprintf(str,"%5ld.%03ld",bfr,aft);
+		DICT16_print(str,0,10,WHITE);
+        OLED_display();
+
+        int32_t increment=1;
+        for(;increment<100000000L;increment*=10){
+        	if(increment*40>curr)break;
+        }
+
+    	uint8_t btn = IO_getButtons();
+    	if(btn&BTN_CENTER)return curr;
+    	if(btn&BTN_UP){
+    		curr += increment;
+    	} else if(btn&BTN_DOWN){
+    		curr -= increment;
+    	}
+    	if(btn&BTN_HOLD_UP){
+    		if(wait>20){
+    			curr += increment;
+    		} else {
+    			wait++;
+    		}
+    	} else if(btn&BTN_HOLD_DOWN){
+    		if(wait>20){
+    			curr -= increment;
+    		} else {
+    			wait++;
+    		}
+    	} else {
+    		wait = 0;
+    	}
+        if(curr<min)curr = min;
+        if(curr>max)curr = max;
+	}
 }
 
 int32_t APP_readColor(int32_t current){
@@ -460,7 +509,7 @@ void APP_calibrateTemperature() {
     	DICT8_print(buff,2,2,WHITE);
         sprintf(buff, "%03d;C / 100;C", CONTROL_currentTemp);
         DICT8_print(buff,2,12,WHITE);
-        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_100]);
+        sprintf(buff, "%04d / %04d ", raw, (int)APP_cfgs[CFG_CALIB_100]);
         DICT8_print(buff,2,22,WHITE);
     	OLED_display();
 
@@ -500,7 +549,7 @@ void APP_calibrateTemperature() {
     	DICT8_print(buff,2,2,WHITE);
         sprintf(buff, "%03d;C / 188;C", CONTROL_currentTemp);
         DICT8_print(buff,2,12,WHITE);
-        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_188]);
+        sprintf(buff, "%04d / %04d ", raw, (int)APP_cfgs[CFG_CALIB_188]);
         DICT8_print(buff,2,22,WHITE);
     	OLED_display();
 
@@ -539,7 +588,7 @@ void APP_calibrateTemperature() {
     	DICT8_print(buff,2,2,WHITE);
         sprintf(buff, "%03d;C / 220;C", CONTROL_currentTemp);
         DICT8_print(buff,2,12,WHITE);
-        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_220]);
+        sprintf(buff, "%04d / %04d ", raw, (int)APP_cfgs[CFG_CALIB_220]);
         DICT8_print(buff,2,22,WHITE);
     	OLED_display();
 
@@ -577,7 +626,7 @@ void APP_calibrateTemperature() {
     	DICT8_print(buff,2,2,WHITE);
         sprintf(buff, "%03d;C / 300;C", CONTROL_currentTemp);
         DICT8_print(buff,2,12,WHITE);
-        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_300]);
+        sprintf(buff, "%04d / %04d ", raw, (int)APP_cfgs[CFG_CALIB_300]);
         DICT8_print(buff,2,22,WHITE);
     	OLED_display();
 
@@ -614,7 +663,7 @@ void APP_calibrateTemperature() {
     	DICT8_print(buff,2,2,WHITE);
         sprintf(buff, "%03d;C / 400;C", CONTROL_currentTemp);
         DICT8_print(buff,2,12,WHITE);
-        sprintf(buff, "%04d / %04d ", raw, APP_cfgs[CFG_CALIB_400]);
+        sprintf(buff, "%04d / %04d ", raw, (int)APP_cfgs[CFG_CALIB_400]);
         DICT8_print(buff,2,22,WHITE);
     	OLED_display();
 
@@ -637,7 +686,7 @@ void APP_calibrateTemperature() {
     DICT8_print("    p/ voltar     ",2,22,WHITE);
 	OLED_display();
 
-    APP_waitForButtonPress(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+    APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
     APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
 
     EEPROM_save(CFG_CALIB_0);
@@ -654,22 +703,49 @@ void APP_calibrateTemperature() {
 }
 
 void APP_calibrateControl() {
-	int8_t btn;
 	OLED_clearScreen(0);
 	DICT8_print("Favor usar        ",2,2,WHITE);
 	DICT8_print("manual p/         ",2,12,WHITE);
 	DICT8_print("procedimento:     ",2,22,WHITE);
 	DICT32_printQrcodeHelp(128-36);
 	OLED_display();
-	do{
-		CORE_delay(50);
-		btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-	}while(btn==0);
-	do{
-		CORE_delay(50);
-		btn = IO_getButtons()&(BTN_UP|BTN_DOWN|BTN_CENTER);
-	}while(btn!=0);
+    APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
 
+	OLED_clearScreen(0);
+	DICT8_print("Proporcional:     ",2,0,WHITE);
+	APP_cfgs[CFG_PID_P] = APP_readFixed(APP_cfgs[CFG_PID_P], -1000000, 1000000);
+
+	OLED_clearScreen(0);
+	DICT8_print("Integral:         ",2,0,WHITE);
+	APP_cfgs[CFG_PID_I] = APP_readFixed(APP_cfgs[CFG_PID_I], -1000, 1000);
+
+	OLED_clearScreen(0);
+	DICT8_print("Derivative:       ",2,0,WHITE);
+	APP_cfgs[CFG_PID_D] = APP_readFixed(APP_cfgs[CFG_PID_D], -1000000, 1000000);
+
+	OLED_clearScreen(0);
+	DICT8_print("Max. Integral:    ",2,0,WHITE);
+	APP_cfgs[CFG_PID_MAXI] = APP_readInteger(APP_cfgs[CFG_PID_MAXI], 0, 100000000, 100, 0);
+
+	OLED_clearScreen(0);
+    DICT8_print("Qualquer bot~o p/ ",2,2,WHITE);
+    DICT8_print(" salvar. Desligue ",2,12,WHITE);
+    DICT8_print("    p/ voltar     ",2,22,WHITE);
+	OLED_display();
+
+    APP_waitForButtonPress(BTN_UP|BTN_DOWN|BTN_CENTER);
+    APP_waitForButtonRelease(BTN_HOLD_UP|BTN_HOLD_DOWN|BTN_HOLD_CENTER);
+
+    EEPROM_save(CFG_PID_P);
+    EEPROM_save(CFG_PID_I);
+    EEPROM_save(CFG_PID_D);
+    EEPROM_save(CFG_PID_MAXI);
+
+	OLED_clearScreen(0);
+    DICT8_print("      Salvo!      ",2,12,WHITE);
+	OLED_display();
+	CORE_delay(500);
 }
 
 #endif // _FERRASSUDER__APPLICATION_H_

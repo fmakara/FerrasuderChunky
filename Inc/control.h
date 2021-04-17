@@ -17,28 +17,13 @@ int16_t CONTROL_targetTemp;
 int16_t CONTROL_currentTemp;
 int16_t CONTROL_currentCommand_permil;
 
-uint64_t CONTROL_PWMnextHigh;
-uint64_t CONTROL_PWMnextLow;
-
 #define CONTROL_READ_AVG_PWR   (4)
 #define CONTROL_READ_AVGS      (1<<CONTROL_READ_AVG_PWR)
-
-#define CONTROL_PIDX1024_P     (10*1024)
-#define CONTROL_PIDX1024_I     (100)
-#define CONTROL_PIDX1024_D     (0)
-#define CONTROL_PIDX1024_MAXI  (1024)
-
-#define CONTROL_PWM_PERIODMUL  (500ULL)
-#define CONTROL_PWM_MAXPC      (90ULL)
-#define CONTROL_STABLE_MICROS  (CONTROL_PWM_PERIODMUL*5)
-
 
 void CONTROL_startup(){
     CONTROL_targetTemp = 0;
     CONTROL_currentTemp = 0;
     CONTROL_currentCommand_permil = 0;
-    CONTROL_PWMnextHigh = 0;
-    CONTROL_PWMnextLow = 0;
 }
 
 int16_t CONTROL_readFilterRawTemperature(){
@@ -92,11 +77,11 @@ int32_t CONTROL_calculateComand(){
     static int32_t integrator=0, lastErr=0;
     int32_t err = CONTROL_targetTemp-CONTROL_currentTemp;
     integrator += err;
-    if(integrator>CONTROL_PIDX1024_MAXI)integrator=CONTROL_PIDX1024_MAXI;
-    if(integrator<-CONTROL_PIDX1024_MAXI)integrator=-CONTROL_PIDX1024_MAXI;
-    int32_t c = ((CONTROL_PIDX1024_P*err)>>10);
-    c += ((CONTROL_PIDX1024_I*integrator)>>10);
-    c += ((CONTROL_PIDX1024_D*(lastErr-err))>>10);
+    if(integrator>APP_cfgs[CFG_PID_MAXI])integrator=APP_cfgs[CFG_PID_MAXI];
+    if(integrator<(-APP_cfgs[CFG_PID_MAXI]/10))integrator=-APP_cfgs[CFG_PID_MAXI]/10;
+    int32_t c = ((APP_cfgs[CFG_PID_P]*err)/1000);
+    c += ((APP_cfgs[CFG_PID_I]*integrator)/1000);
+    c += ((APP_cfgs[CFG_PID_D]*(lastErr-err))/1000);
     lastErr = err;
     return c;
 }
@@ -106,26 +91,5 @@ int16_t CONTROL_commandToPermil(int32_t command){
     if(command>1000)return 1000;
     return command;
 }
-/*
-void CONTROL_generateHighPWM(){
-    if(CORE_getMicros()>CONTROL_PWMnextHigh){
-      CONTROL_PWMnextHigh = CORE_getMicros();
-    }
-    CONTROL_PWMnextLow = CONTROL_PWMnextHigh+CONTROL_currentCommand_percent*CONTROL_PWM_PERIODMUL;
-    while(CORE_getMicros()<CONTROL_PWMnextHigh);
-    if(CONTROL_currentCommand_percent>0){
-      IO_activateMosfet(1);
-    }
-    CONTROL_PWMnextHigh += 100*CONTROL_PWM_PERIODMUL;
-}
-
-void CONTROL_generateLowPWM(){
-    while(CORE_getMicros()<CONTROL_PWMnextLow);
-    IO_activateMosfet(0);
-}
-
-void CONTROL_waitUntilCanReadTemp(){
-    while(CORE_getMicros()+CONTROL_STABLE_MICROS<CONTROL_PWMnextHigh);
-}*/
 
 #endif // _FERRASSUDER__CONTROL_H_

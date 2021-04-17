@@ -37,6 +37,7 @@ enum EepromConfigs {
 	CFG_PID_P,
 	CFG_PID_I,
 	CFG_PID_D,
+	CFG_PID_MAXI,
     CFG_MAX
 };
 
