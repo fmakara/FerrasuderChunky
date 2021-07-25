@@ -9,6 +9,7 @@ int16_t CONTROL_readFilterRawTemperature();
 int16_t CONTROL_rawToC(int16_t raw);
 int32_t CONTROL_calculateComand();
 int16_t CONTROL_commandToPermil(int32_t command);
+
 void CONTROL_generateHighPWM();
 void CONTROL_generateLowPWM();
 void CONTROL_waitUntilCanReadTemp();

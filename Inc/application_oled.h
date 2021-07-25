@@ -12,10 +12,13 @@
 #include "dict_16px.h"
 #include "qrcode_32px.h"
 
+#define TEMP_READ_STAB_TIME 1000
+
 void APP_manageUI();
 void APP_mainMenu();
 void APP_calibrateTemperature();
 void APP_calibrateControl();
+int32_t APP_calibrateIronInductance();
 
 int32_t APP_readColor(int32_t current);
 int32_t APP_readInteger(int32_t curr, int32_t min, int32_t max, int32_t step, uint8_t type);
@@ -84,18 +87,21 @@ void APP_startup(){
 #include "stm32f0xx_hal_gpio.h"
 void APP_loop(){
     //Prepare to read the bimetalic
+//    IO_pwmMosfet(1000);
+//    CORE_delayUs(100);
     IO_pwmMosfet(0);
-    CORE_delayUs(1000);
+    CORE_delayUs(TEMP_READ_STAB_TIME);
     //Calculate command
     int16_t raw = CONTROL_readFilterRawTemperature();
     CONTROL_currentTemp = CONTROL_rawToC(raw);
     int32_t command = CONTROL_calculateComand();
     CONTROL_currentCommand_permil = CONTROL_commandToPermil(command);
     //Activate PWM
-    IO_pwmMosfet(CONTROL_currentCommand_permil);
+    //IO_pwmMosfet(CONTROL_currentCommand_permil);
+    IO_pwmMosfet(500);
     //Run PWM while updating screen
 	APP_manageUI();
-	CORE_delay(10);
+	CORE_delay(30);
 }
 
 void APP_degcToUser(int16_t temp, char* str){
@@ -393,15 +399,20 @@ int32_t APP_readFixed(int32_t curr, int32_t min, int32_t max){
 		OLED_fastBox(0,10,127,26,BLACK);
 		char str[20];
 		int32_t bfr,aft;
-		bfr = curr/1000;
-		aft = curr%1000;
+		int32_t posCurr = curr;
+		if(curr<0){
+			DICT8_print("-",0,14,WHITE);
+			posCurr = -curr;
+		}
+		bfr = posCurr/1000;
+		aft = posCurr%1000;
 		sprintf(str,"%5ld.%03ld",bfr,aft);
 		DICT16_print(str,0,10,WHITE);
-        OLED_display();
+		OLED_display();
 
         int32_t increment=1;
         for(;increment<100000000L;increment*=10){
-        	if(increment*40>curr)break;
+        	if(increment*40>posCurr)break;
         }
 
     	uint8_t btn = IO_getButtons();
@@ -746,6 +757,24 @@ void APP_calibrateControl() {
     DICT8_print("      Salvo!      ",2,12,WHITE);
 	OLED_display();
 	CORE_delay(500);
+}
+
+int32_t CONTROL_calibrateInductance(){
+	int32_t sum = 0, highest = 0, lowest = 0xFFFF;
+	for(int i=0; i<18; i++){
+	    IO_pwmMosfet(1000);
+	    CORE_delay(250);
+	    IO_pwmMosfet(0);
+	    CORE_delayUs(TEMP_READ_STAB_TIME);
+	    int32_t t0 = CONTROL_readFilterRawTemperature();
+	    CORE_delay(250);
+	    int32_t t1 = CONTROL_readFilterRawTemperature();
+	    int32_t t = t1-t0;
+	    if(t>highest)highest = t;
+	    if(t<lowest)lowest = t;
+	    sum += t;
+	}
+	return (sum-(highest+lowest))/16;
 }
 
 #endif // _FERRASSUDER__APPLICATION_H_

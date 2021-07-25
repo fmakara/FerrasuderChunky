@@ -415,8 +415,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LEDCLK_Pin|LEDDATA_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : MOVINT2_Pin MOVINT1_Pin */
-  GPIO_InitStruct.Pin = MOVINT2_Pin|MOVINT1_Pin;
+  /*Configure GPIO pins : IRONPRES_Pin NOTUSED_Pin */
+  GPIO_InitStruct.Pin = IRONPRES_Pin|NOTUSED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -428,11 +428,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : NOTUSED_Pin */
-  GPIO_InitStruct.Pin = NOTUSED_Pin;
+  /*Configure GPIO pin : MOVINT1_Pin */
+  GPIO_InitStruct.Pin = MOVINT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(NOTUSED_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(MOVINT1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BTNC_Pin */
   GPIO_InitStruct.Pin = BTNC_Pin;
